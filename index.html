@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WHO'S SUS?! — Imposter Party Game</title>
+  <!-- Google Fonts for the Comic / Arcade Vibe -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Link to your CSS file -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Interactive Soundboard -->
+    <div class="soundbar">
+      <button class="sfx-btn" onclick="playSFX('sus')">🤨 SUS</button>
+      <button class="sfx-btn" onclick="playSFX('siren')">🚨 MEETING</button>
+      <button class="sfx-btn" onclick="playSFX('eject')">🚀 EJECT</button>
+      <button class="sfx-btn" onclick="playSFX('win')">🎉 FANFARE</button>
+    </div>
+
+    <!-- Main Game Title -->
+    <div class="title-banner">
+      <h1>WHO'S SUS?!</h1>
+      <div class="subtitle">Social Deduction Party Game</div>
+    </div>
+
+    <!-- SCREEN 1: HOME / LOBBY SETUP -->
+    <section id="screen-lobby" class="screen active">
+      <div class="room-code-box">
+        <div class="room-label">PARTY ROOM CODE (SYNC ACROSS TABS)</div>
+        <span id="room-code-display">SUS4</span>
+        <div class="btn-row" style="margin-top: 6px;">
+          <input type="text" id="join-code-input" placeholder="Enter 4-Letter Code" maxlength="4" class="code-input" />
+          <button class="btn btn-cyan btn-inline" onclick="joinRoomCode()">JOIN</button>
+        </div>
+      </div>
+
+      <label>Add Players (3 to 12)</label>
+      <div class="btn-row">
+        <input type="text" id="player-input" placeholder="Player name..." maxlength="14" style="margin:0;" onkeypress="if(event.key==='Enter') addPlayer()" />
+        <button class="btn btn-purple btn-icon" onclick="addRandomFunnyName()" title="Random Funny Name">🎲</button>
+        <button class="btn btn-yellow btn-icon" onclick="addPlayer()">+</button>
+      </div>
+
+      <div id="player-list" class="player-list"></div>
+
+      <div class="btn-row">
+        <div style="flex:1;">
+          <label>Category</label>
+          <select id="category-select">
+            <option value="foods">🍕 Fast Food & Snacks</option>
+            <option value="places">🏖️ Crazy Places</option>
+            <option value="movies">🎬 Pop Culture & Movies</option>
+            <option value="animals">🦖 Weird Animals</option>
+            <option value="tech">💻 Tech & Gaming</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label>Game Mode</label>
+          <select id="mode-select">
+            <option value="classic">🕵️ Classic Spy (No Word)</option>
+            <option value="undercover">🎭 Undercover (Decoy Word)</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-red" onclick="startGame()">🚀 START MATCH</button>
+    </section>
+
+    <!-- SCREEN 2: SECRET ROLE REVEAL -->
+    <section id="screen-reveal" class="screen">
+      <h2 id="reveal-player-turn" class="center-cyan">Pass phone to: Player 1</h2>
+      <p class="sub-instruction">Make sure nobody else is peeking at your screen!</p>
+
+      <div class="card-scene" onclick="flipRoleCard()">
+        <div id="role-flip-card" class="flip-card">
+          <div class="card-face card-front">
+            <div style="font-size: 3.5rem;">🕵️‍♂️</div>
+            <h3 style="margin-top: 10px; font-size: 1.5rem;">TAP TO REVEAL ROLE</h3>
+            <p style="font-size: 0.85rem; opacity: 0.85; margin-top: 6px;">Tap again to hide before passing!</p>
+          </div>
+          <div class="card-face card-back">
+            <div id="role-badge" class="role-badge role-crew">CREWMATE</div>
+            <div style="font-size: 0.85rem; text-transform: uppercase; opacity: 0.75;">Your Secret Prompt:</div>
+            <div id="secret-word-text" class="secret-word-box">PEPPERONI PIZZA</div>
+            <p id="role-hint-text" style="font-size: 0.85rem; margin-top: 6px;">Give a 1-word clue without making it too obvious!</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="next-reveal-btn" class="btn btn-yellow" onclick="nextPlayerReveal()" style="display:none;">
+        ✅ I MEMORIZED IT — NEXT PLAYER
+      </button>
+    </section>
+
+    <!-- SCREEN 3: CLUE & DISCUSSION TIMER -->
+    <section id="screen-discussion" class="screen">
+      <h2 style="text-align:center; color: var(--yellow);">🗣️ INTERROGATION TIME!</h2>
+      <p id="speaker-order-text" style="text-align:center; font-size:0.95rem; margin-top:6px;"></p>
+
+      <div id="timer-display" class="timer-circle">02:00</div>
+
+      <div class="rules-box">
+        <strong>💡 Quick Rules:</strong>
+        <ul>
+          <li>Each player says <strong>one subtle clue</strong> about their word.</li>
+          <li>Debate who sounds lost or suspicious!</li>
+        </ul>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-purple" onclick="addThirtySeconds()">+30 SEC</button>
+        <button class="btn btn-red" onclick="goToVoting()">🚨 VOTE NOW</button>
+      </div>
+    </section>
+
+    <!-- SCREEN 4: EMERGENCY VOTING -->
+    <section id="screen-voting" class="screen">
+      <h2 id="voter-prompt" class="center-cyan">Player 1: Who is the Imposter?</h2>
+      <p class="sub-instruction">Tap the most suspicious player to cast your secret vote.</p>
+
+      <div id="vote-grid" class="vote-grid"></div>
+    </section>
+
+    <!-- SCREEN 5: RESULTS & IMPOSTER REDEMPTION -->
+    <section id="screen-results" class="screen">
+      <div style="text-align:center;">
+        <div id="result-emoji" style="font-size: 4rem;">🚀</div>
+        <h2 id="result-headline" style="font-size: 1.9rem; color: var(--yellow); margin: 6px 0;"></h2>
+        <p id="result-subtext" style="font-size: 1rem; margin-bottom: 14px;"></p>
+      </div>
+
+      <!-- Imposter Last Stand Redemption Box -->
+      <div id="redemption-box" class="redemption-box">
+        <h3 style="color:var(--red); text-align:center;">🔥 IMPOSTER'S LAST STAND!</h3>
+        <p style="font-size:0.85rem; text-align:center; margin:6px 0;">You got caught! Guess the Crew's exact secret word to steal the victory:</p>
+        <div id="redemption-options" class="vote-grid"></div>
+      </div>
+
+      <div id="word-summary-box" class="summary-box">
+        <div>Crew Secret Word: <strong id="summary-crew-word" style="color:var(--cyan);"></strong></div>
+        <div id="summary-imposter-line">Imposter: <strong id="summary-imposter-name" style="color:var(--red);"></strong></div>
+      </div>
+
+      <button class="btn btn-yellow" onclick="resetToLobby()">🔄 PLAY ANOTHER ROUND</button>
+    </section>
+  </div>
+
+  <!-- Link to your JavaScript file -->
+  <script src="app.js"></script>
+</body>
+</html>
